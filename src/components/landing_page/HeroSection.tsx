@@ -12,6 +12,17 @@ function HeroSection() {
     // Parallax effect: Subtle movement to prevent gaps
     const y = useTransform(scrollYProgress, [0, 1], ["-5%", "5%"]);
 
+    // Smooth scroll to services section
+    const scrollToServices = () => {
+        const servicesSection = document.getElementById('services');
+        if (servicesSection) {
+            servicesSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    };
+
     return (
         <section className="w-full bg-white overflow-x-clip">
             {/* Hero Content Container */}
@@ -162,6 +173,7 @@ function HeroSection() {
             <div className="w-full flex flex-col gap-6 items-center justify-center -mt-4 relative z-10">
                 {/* Pink bounce button - sits above the grey strip */}
                 <button
+                    onClick={scrollToServices}
                     className="flex items-center justify-center w-11 h-11 rounded-lg bg-[#E84A7F] shadow-lg shadow-[#E84A7F]/25 animate-gentle-bounce cursor-pointer hover:scale-105 transition-transform"
                 >
                     <ChevronDown className="w-5 h-5 text-white" strokeWidth={2.5} />

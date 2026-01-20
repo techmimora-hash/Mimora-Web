@@ -41,7 +41,7 @@ const features: Feature[] = [
 
 const FeaturesSection: React.FC = () => {
     return (
-        <section className="w-full bg-[#FFFFFF] py-[80px] flex flex-col items-center">
+        <section id="services" className="w-full bg-[#FFFFFF] py-[80px] flex flex-col items-center">
             {/* Header */}
             <div className="max-w-[1240px] w-full px-6 md:px-12 flex flex-col items-center mb-20 text-center">
                 <h2 className="text-[32px] md:text-[36px] font-semibold text-[#1E1E1E] mb-4 leading-tight">
