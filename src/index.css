@@ -8,6 +8,22 @@
   --color-nav-text: #2B2B2B;
   --color-muted: #666666;
   --navbar-height: 64px;
+
+  /* Loader Variables - Light Theme */
+  --bg-main: #FFFFFF;
+  --accent: #E84A7F;
+  --text-secondary: #666666;
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-10px) translateX(5px); }
+  50% { transform: translateY(-5px) translateX(-3px); }
+  75% { transform: translateY(-15px) translateX(3px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 html {

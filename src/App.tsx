@@ -1,10 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Lenis from 'lenis'
 
+// Components
+import PageLoader from './components/common/PageLoader'
+
 // Pages
-import HomePage from './pages/HomePage'
+const LandingPage = lazy(() => import('./pages/LandingPage'))
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -42,10 +45,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="min-h-screen bg-white">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            {/* Add more routes here as needed */}
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              {/* Add more routes here as needed */}
+            </Routes>
+          </Suspense>
         </div>
       </Router>
     </QueryClientProvider>
