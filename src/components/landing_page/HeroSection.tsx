@@ -130,7 +130,18 @@ function HeroSection() {
                     </motion.div>
 
                     {/* Mobile Static View - Centered "Zoomed" Image */}
-                    <div className="md:hidden w-full h-[350px] relative overflow-hidden">
+                    <motion.div
+                        className="md:hidden w-full h-[350px] relative overflow-hidden"
+                        animate={{
+                            y: [0, -10, 0],
+                            scale: [1, 1.01, 1]
+                        }}
+                        transition={{
+                            duration: 4,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                    >
                         <div
                             className="w-full h-full bg-no-repeat bg-center"
                             style={{
@@ -140,7 +151,7 @@ function HeroSection() {
                         />
                         {/* Bottom gradient overlay - white fade */}
                         <div className="absolute bottom-0 left-0 right-0 pointer-events-none h-[80px] bg-linear-to-t from-white to-transparent" />
-                    </div>
+                    </motion.div>
 
                     {/* Bottom gradient overlay - white fade */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none h-[150px] bg-linear-to-t from-white via-white/50 to-transparent" />
