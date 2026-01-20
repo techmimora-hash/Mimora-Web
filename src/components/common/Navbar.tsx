@@ -1,8 +1,22 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const navigate = useNavigate();
+
+    // Handle navigation to auth page with smooth transition
+    const handleLoginClick = () => {
+        // Add exit animation class to the page
+        document.body.classList.add('page-transition-out');
+
+        // Navigate after animation completes
+        setTimeout(() => {
+            navigate('/auth');
+            document.body.classList.remove('page-transition-out');
+        }, 400);
+    };
 
     // Smooth scroll handler for navigation links
     const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
@@ -53,6 +67,7 @@ function Navbar() {
 
                     {/* Login Button - Always Visible */}
                     <button
+                        onClick={handleLoginClick}
                         className="flex items-center justify-center bg-[#111111] text-white text-[13px] font-medium rounded-full transition-all duration-200 hover:scale-[1.02]"
                         style={{
                             height: '36px',

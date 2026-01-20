@@ -8,6 +8,8 @@ import PageLoader from './components/common/PageLoader'
 
 // Pages
 const LandingPage = lazy(() => import('./pages/LandingPage'))
+const AuthPage = lazy(() => import('./pages/AuthPage'))
+const HomePage = lazy(() => import('./pages/HomePage'))
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -48,6 +50,8 @@ function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/home" element={<HomePage />} />
               {/* Add more routes here as needed */}
             </Routes>
           </Suspense>
