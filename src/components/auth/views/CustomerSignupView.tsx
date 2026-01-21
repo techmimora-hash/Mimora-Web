@@ -181,6 +181,8 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
         };
     }, [otpSent, timer]);
 
+
+
     const handleFullNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         onFullNameChange(e.target.value);
     }, [onFullNameChange]);
@@ -351,7 +353,7 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
             {googleLoading && (
                 <div className="mt-4 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-                    <span className="ml-2 text-sm text-gray-600">Signing in with Google...</span>
+                    <span className="ml-2 text-sm text-gray-600">Signing in with Google....</span>
                 </div>
             )}
 
