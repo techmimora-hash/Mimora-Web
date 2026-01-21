@@ -4,6 +4,9 @@ import PhoneInput from '../PhoneInput';
 import OTPInput from '../OTPInput';
 import PrimaryButton from '../PrimaryButton';
 import SecondaryButton, { EmailIcon, GoogleIcon } from '../SecondaryButton';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '@/firebase';
+import { authService } from '@/services/authService';
 
 interface CustomerSignupViewProps {
     fullName: string;
@@ -16,7 +19,6 @@ interface CustomerSignupViewProps {
     onOtpChange: (otp: string[]) => void;
     onSubmit: () => void;
     onEmailSignIn: () => void;
-    onGoogleSignIn: () => void;
     onLoginClick: () => void;
 }
 
@@ -67,7 +69,6 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
     onOtpChange,
     onSubmit,
     onEmailSignIn,
-    onGoogleSignIn,
     onLoginClick,
 }) => {
     const [touched, setTouched] = useState({
@@ -78,6 +79,8 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
     const [otpSent, setOtpSent] = useState(false);
     const [timer, setTimer] = useState(30);
     const [canResend, setCanResend] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const [googleError, setGoogleError] = useState<string | null>(null);
     const timerRef = useRef<number | null>(null);
 
     // Get validation errors
@@ -91,6 +94,75 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
     // Check if OTP is complete and valid
     const isOtpComplete = otp.join('').length === 6;
     const isOtpValid = !validateOtp(otp);
+
+    // Google Sign In Handler with Backend Integration
+    const handleGoogleSignIn = useCallback(async () => {
+        console.log('🔴 STEP 1: Button clicked');
+        setGoogleLoading(true);
+        setGoogleError(null);
+        
+        try {
+            console.log('🔴 STEP 2: Auth object exists?', !!auth);
+            console.log('🔴 STEP 3: Creating provider...');
+            
+            const provider = new GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            console.log('🔴 STEP 4: Provider created');
+            
+            console.log('🔴 STEP 5: Calling signInWithPopup NOW...');
+            const result = await signInWithPopup(auth, provider);
+            
+            console.log('🔴 STEP 6: Popup worked! User:', result.user.email);
+            console.log('🔴 STEP 7: User data:', {
+                uid: result.user.uid,
+                email: result.user.email,
+                displayName: result.user.displayName,
+            });
+            
+            // Get Firebase token
+            console.log('🔴 STEP 8: Getting Firebase token...');
+            const firebaseToken = await result.user.getIdToken();
+            console.log('🔴 STEP 9: Token received:', firebaseToken.substring(0, 20) + '...');
+            
+            // Send to backend
+            console.log('🔴 STEP 10: Sending to backend...');
+            const user = await authService.authenticateWithOAuth(firebaseToken);
+            console.log('🔴 STEP 11: Backend response:', user);
+            
+            // Save user data to localStorage
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('firebaseToken', firebaseToken);
+            
+            console.log('✅ SUCCESS! User authenticated:', user);
+            alert(`Welcome, ${user.name || user.email}! 🎉`);
+            
+            // TODO: Navigate to home page
+            // window.location.href = '/home';
+            
+        } catch (error: any) {
+            console.error('❌ ERROR occurred:', error);
+            console.error('❌ Error code:', error.code);
+            console.error('❌ Error message:', error.message);
+            
+            let errorMessage = 'Failed to sign in with Google';
+            
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = 'Sign-in cancelled';
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMessage = 'Popup blocked. Please allow popups for this site';
+            } else if (error.code === 'auth/unauthorized-domain') {
+                errorMessage = 'This domain is not authorized. Please add it to Firebase Console.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            setGoogleError(errorMessage);
+            alert(`Error: ${errorMessage}`);
+        } finally {
+            setGoogleLoading(false);
+        }
+    }, []);
 
     // Timer effect
     useEffect(() => {
@@ -131,34 +203,33 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
     }, [onOtpChange]);
 
     const handleGetOtp = useCallback(() => {
-        // Mark all fields as touched to show any errors
         setTouched(prev => ({ ...prev, fullName: true, phone: true }));
 
         if (isFormValid) {
             setOtpSent(true);
             setTimer(30);
             setCanResend(false);
+            onSubmit();
         }
-    }, [isFormValid]);
+    }, [isFormValid, onSubmit]);
 
     const handleResendOtp = useCallback(() => {
         if (canResend) {
             setTimer(30);
             setCanResend(false);
-            // Reset OTP
             onOtpChange(['', '', '', '', '', '']);
             setTouched(prev => ({ ...prev, otp: false }));
+            onSubmit();
         }
-    }, [canResend, onOtpChange]);
+    }, [canResend, onOtpChange, onSubmit]);
 
-    const handleSubmit = useCallback(() => {
+    const handleVerifyOtp = useCallback(() => {
         setTouched(prev => ({ ...prev, otp: true }));
         if (isOtpValid) {
             onSubmit();
         }
     }, [isOtpValid, onSubmit]);
 
-    // Format timer as MM:SS
     const formatTimer = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -200,7 +271,7 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
                     />
                 </div>
 
-                {/* OTP Section - appears after Create Account is clicked */}
+                {/* OTP Section */}
                 {otpSent && (
                     <div className="mt-2 animate-fade-in">
                         <label className="block text-xs text-[#6B6B6B] mb-1">
@@ -214,7 +285,6 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
                             compact
                         />
 
-                        {/* Timer and Resend */}
                         <div className="flex items-center justify-between mt-1">
                             <span className="text-xs text-[#6B6B6B]">
                                 {formatTimer(timer)}
@@ -222,10 +292,11 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
                             <button
                                 onClick={handleResendOtp}
                                 disabled={!canResend}
-                                className={`text-xs font-medium underline transition-colors ${canResend
-                                    ? 'text-[#1E1E1E] hover:text-[#E91E63] cursor-pointer'
-                                    : 'text-gray-400 cursor-not-allowed'
-                                    }`}
+                                className={`text-xs font-medium underline transition-colors ${
+                                    canResend
+                                        ? 'text-[#1E1E1E] hover:text-[#E91E63] cursor-pointer'
+                                        : 'text-gray-400 cursor-not-allowed'
+                                }`}
                             >
                                 Resend OTP
                             </button>
@@ -234,21 +305,14 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
                 )}
             </div>
 
-            {/* Create Account / Verify Button */}
+            {/* Create Account Button */}
             <div className={otpSent ? 'mt-3' : 'mt-6'}>
                 {!otpSent ? (
-                    <PrimaryButton
-                        onClick={handleGetOtp}
-                        disabled={!isFormValid}
-                    >
+                    <PrimaryButton onClick={handleGetOtp} disabled={!isFormValid}>
                         Create account
                     </PrimaryButton>
                 ) : (
-                    <PrimaryButton
-                        onClick={handleSubmit}
-                        disabled={!isOtpComplete}
-                        compact
-                    >
+                    <PrimaryButton onClick={handleVerifyOtp} disabled={!isOtpComplete} compact>
                         Create account
                     </PrimaryButton>
                 )}
@@ -266,10 +330,30 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
                 <SecondaryButton icon={<EmailIcon />} onClick={onEmailSignIn} compact={otpSent}>
                     Sign in with Email
                 </SecondaryButton>
-                <SecondaryButton icon={<GoogleIcon />} onClick={onGoogleSignIn} compact={otpSent}>
-                    Sign in with Google
+                <SecondaryButton 
+                    icon={<GoogleIcon />} 
+                    onClick={handleGoogleSignIn}
+                    disabled={googleLoading}
+                    compact={otpSent}
+                >
+                    {googleLoading ? 'Signing in...' : 'Sign in with Google'}
                 </SecondaryButton>
             </div>
+
+            {/* Google Error Display */}
+            {googleError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{googleError}</p>
+                </div>
+            )}
+
+            {/* Google Loading Indicator */}
+            {googleLoading && (
+                <div className="mt-4 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                    <span className="ml-2 text-sm text-gray-600">Signing in with Google...</span>
+                </div>
+            )}
 
             {/* Footer Link */}
             <p className={`text-center text-sm text-[#6B6B6B] ${otpSent ? 'mt-4' : 'mt-8'}`}>
@@ -286,4 +370,3 @@ const CustomerSignupView: React.FC<CustomerSignupViewProps> = ({
 };
 
 export default CustomerSignupView;
-
